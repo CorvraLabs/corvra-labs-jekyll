@@ -12,7 +12,39 @@ a {
   color: #3C7A6E;
 }
 
+/* Header Styling */
 .site-header {
   background-color: #212123;
   border-bottom: 2px solid #3C7A6E;
+  padding: 1.5rem 0;
+  text-align: center;
+}
+
+.logo-container {
+  margin-bottom: 1rem;
+}
+
+.logo-image {
+  height: 500px;
+  max-width: 100%;
+}
+
+/* Navigation Styling */
+.site-nav {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.page-link {
+  color: #3C7A6E;
+  font-weight: bold;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.page-link:hover {
+  color: #fff;
 }
