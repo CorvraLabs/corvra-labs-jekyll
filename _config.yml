@@ -6,3 +6,5 @@ plugins:
   - jekyll-seo-tag
 url: "https://corvralabs.ca"
 baseurl: ""
+sass:
+  style: compressed

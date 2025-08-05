@@ -31,20 +31,24 @@ a {
 
 /* Navigation Styling */
 .site-nav {
-  display: flex;
-  justify-content: center;
-  gap: 1.5rem;
+  display: flex !important;
+  justify-content: center !important;
   flex-wrap: wrap;
+  gap: 1.5rem;
   margin-top: 0.5rem;
+  float: none !important;
+  text-align: center;
+  padding: 0;
 }
 
 .page-link {
-  color: #3C7A6E;
+  float: none !important;
+  color: #3C7A6E !important;
   font-weight: bold;
   text-decoration: none;
   transition: color 0.2s;
 }
 
 .page-link:hover {
-  color: #fff;
+  color: #fff !important;
 }
