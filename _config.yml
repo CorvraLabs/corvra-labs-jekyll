@@ -1,0 +1,8 @@
+title: Corvra Labs
+description: Cybersecurity Research and Tools
+theme: minima
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+url: "https://corvralabs.ca"
+baseurl: ""
