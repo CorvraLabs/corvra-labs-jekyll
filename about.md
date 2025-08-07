@@ -6,4 +6,4 @@ permalink: /about/
 
 # About Corvra Labs
 
-Corvra Labs is a cybersecurity research and tooling initiative focused on offensive security, application security, red teaming, and vulnerability discovery. Operated by Derrick Polakoff, it exists to publish insights, CVE writeups, and open-source tools.
+Hi I'm Derrick, I made this space to share reasearch, opinion pieces and other infosec releated topics with a focus on AppSec and OffSec. All opinions shared here are my own and not that of my employer. 
