@@ -1,0 +1,20 @@
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page.title | default: site.title }}</title>
+
+  <!-- Favicon -->
+  <link rel="icon" href="{{ '/assets/images/favicon.jpg' | relative_url }}" type="image/png">
+
+  <!-- Main stylesheet (built from assets/main.scss) -->
+  <link rel="stylesheet" href="{{ '/assets/main.css' | relative_url }}">
+
+  <!-- Mermaid.js -->
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "neutral"
+    });
+  </script>
+</head>
