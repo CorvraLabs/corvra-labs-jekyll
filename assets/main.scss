@@ -52,3 +52,34 @@ nav.site-nav {
 .page-link:hover {
   color: #fff !important;
 }
+
+/* ===== Table Styling Override ===== */
+table {
+  width: 100%;
+  border-collapse: collapse; /* Remove default spacing */
+  border: 1px solid #212123; /* Outer border */
+  margin: 1.5rem 0;
+  font-size: 1rem;
+}
+
+/* Table headers */
+th {
+  background-color: #3C7A6E; /* Splash color */
+  color: #ffffff;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border: 1px solid #212123;
+}
+
+/* Table cells */
+td {
+  padding: 0.75rem 1rem;
+  border: 1px solid #212123;
+  background-color: #111111; /* Slightly different from page bg for contrast */
+  color: #ffffff;
+}
+
+/* Optional: Hover effect for rows */
+tbody tr:hover {
+  background-color: #1a1a1a;
+}
