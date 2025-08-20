@@ -60,6 +60,8 @@ table {
   border: 1px solid #212123; /* Outer border */
   margin: 1.5rem 0;
   font-size: 1rem;
+  table-layout: auto !important;
+  word-wrap: break-word !important;
 }
 
 /* Table headers */
