@@ -71,8 +71,9 @@ th {
   text-align: left;
   padding: 0.75rem 1rem;
   border: 1px solid #212123;
-  word-wrap: break-word;
-  white-space: normal;
+  word-wrap: break-word !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
 }
 
 /* Table cells */
