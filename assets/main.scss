@@ -90,3 +90,9 @@ td {
 tbody tr:hover {
   background-color: #1a1a1a;
 }
+
+/* Code blocks */
+pre,
+pre code {
+  background-color: #212123 !important;
+}
