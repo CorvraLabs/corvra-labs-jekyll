@@ -15,7 +15,10 @@ This is where AI can help us. Like most offensive minded security professionals 
 
 The end goal was to create a reusable agent skill for Claude that would take a repo and a target hostname as an input and analyze GitHub Advanced Security (GHAS) alerts. First we would create a vulnerable web app to test against that intentionally had both true positives and false positives that GHAS would flag. In the skill we would then direct the agent to pull these alerts, analyze the code it needed to understand the vulnerability and what endpoint would expose it. Next, use the Burp Suite MCP to test exploitability, and finally create issues for true positives or close false positives. Below is a visual of the agent loop: 
 
-```mermaid
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true });</script>
+
+<pre class="mermaid">
 flowchart TD
     START(["/ghas-triage owner/repo target-url"]) --> AUTH
     AUTH["🔐 Authenticate Once\nAsk user for credentials\nStore AUTH_TOKEN via Burp"] --> FETCH
@@ -50,7 +53,7 @@ flowchart TD
     INC --> LOOP
 
     SCORE(["📊 Final Scorecard\nTP · Blind TP · FP"])
-```
+</pre>
 
 
 # Initial Setup
@@ -69,7 +72,7 @@ I started by prompting Claude with the project idea and asking it to create a pl
 
 With this in place I had Claude start working through the sprints to create the vulnerable app with an end goal of it outputting exploitable vs. unexploitable vulnerabilities. At the end of these sprints I had Claude push the code to GitHub (might as well let it go full YOLO mode). This is where I had the first interesting result. Many of the false positives Claude tried to add were not picked up by GHAS: 
 
-```
+<pre style="white-space: pre-wrap; word-wrap: break-word;"><code>
 Alerts are in — a few things to flag:
 
 The good news: Our 4 expected security alerts fired:
@@ -83,20 +86,20 @@ Three issues to sort out before testing:
 4 expected alerts are missing — no js/xss (stored XSS + report FP), no js/code-injection (export FP), and no js/sql-injection on src/routes/users.js (parseInt FP).
 
 On the missing alerts — CodeQL is likely smarter than we gave it credit for. It probably recognized parseInt() and encodeURIComponent() as sanitization and didn't flag them, and may have missed the innerHTML sink because the taint flow is entirely client-side with no server-side source traceable. That's actually a more interesting result than expected — we may end up with 4 alerts instead of 8, all of them TPs.
-```
+</code></pre>
 
 It seemed like Claude had not been able to fool GHAS to create many false positives on it's first attempt! This is a positive and a win for the SAST tool, but we didn't let that defeat stop us. After 2 additional attempts, Claude was able to get GHAS to generate the findings below and it gave it's opinion on what results we would see from the triage agent:
 
 | Alert # | Rule | Finding | Expected decision |
 |---|---|---|---|
-| #35 | `js/sql-injection` | SQLi — `notes/search` (no sanitization) | Confirm TP | 
-| #24 | `js/path-injection` | Path traversal — `files/download` (no sanitization) | Confirm TP | 
-| #23 | `js/request-forgery` | SSRF — `admin/preview` (no sanitization) | Confirm TP | 
-| #25 | `js/path-injection` | Path traversal — `files/static` `ALLOWED_FILES` | Dismiss FP | 
-| #36 | `js/sql-injection` | SQLi — `notes/by` `isAlphaOnly` char-code loop | Dismiss FP | 
-| #37 | `js/path-injection` | Path traversal — `files/signed` HMAC | Dismiss FP | 
-| #38 | `js/type-confusion-through-parameter-tampering` | Type confusion — `isAlphaOnly` array input → crash | Confirm TP | 
-| #39 | `js/type-confusion-through-parameter-tampering` | Type confusion — HMAC handler array input | Likely TP (verify) | 
+| #35 | js/sql-injection | SQLi — notes/search (no sanitization) | Confirm TP | 
+| #24 | js/path-injection | Path traversal — files/download (no sanitization) | Confirm TP | 
+| #23 | js/request-forgery | SSRF — admin/preview (no sanitization) | Confirm TP | 
+| #25 | js/path-injection | Path traversal — files/static ALLOWED_FILES | Dismiss FP | 
+| #36 | js/sql-injection | SQLi — notes/by isAlphaOnly char-code loop | Dismiss FP | 
+| #37 | js/path-injection | Path traversal — files/signed HMAC | Dismiss FP | 
+| #38 | js/type-confusion-through-parameter-tampering | Type confusion — isAlphaOnly array input → crash | Confirm TP | 
+| #39 | js/type-confusion-through-parameter-tampering | Type confusion — HMAC handler array input | Likely TP (verify) | 
 | **Score** | | | **5 TP / 3 FP** | | **/8** |
 
 With the vulnerable app created and running locally we were ready to start our testing!
@@ -114,14 +117,14 @@ Then the agent went through it's loop, pulling the GHAS alerts, analyzing, and t
 
 | Alert # | Rule | Finding | Expected decision | Agent decision | Proof |
 |---|---|---|---|---|---|
-| #35 | `js/sql-injection` | SQLi — `notes/search` (no sanitization) | Confirm TP | TP | ?q=' UNION SELECT ... FROM users-- → full users table + bcrypt hashes (200). Issue #2 |
-| #24 | `js/path-injection` | Path traversal — `files/download` (no sanitization) | Confirm TP | TP | ?name=../../etc/passwd → /etc/passwd exfiltrated (200). Issue #1 |
-| #23 | `js/request-forgery` | SSRF — `admin/preview` (no sanitization) | Confirm TP | TP | ?url=http://127.0.0.1:3000/ → full internal HTML returned (200). Issue #4 |
-| #25 | `js/path-injection` | Path traversal — `files/static` `ALLOWED_FILES` | Dismiss FP | FP | sanitizePath() strips all ..///\ — traversal impossible; array input throws TypeError. Dismissed. |
-| #36 | `js/sql-injection` | SQLi — `notes/by` `isAlphaOnly` char-code loop | Dismiss FP | FP | isAlphaOnly() allows only A-Z/a-z — all SQL metacharacters blocked; array throws TypeError.  |
-| #37 | `js/path-injection` | Path traversal — `files/signed` HMAC | Dismiss FP | TP | Hardcoded SIGN_SECRET='nk-sign-2024' → forged HMAC for ../../etc/passwd → file leaked (200). Issue #3 |
-| #38 | `js/type-confusion-through-parameter-tampering` | Type confusion — `isAlphaOnly` array input → crash | Confirm TP | FP | Array input to isAlphaOnly() throws TypeError: str.charCodeAt is not a function → 500, SQL never runs. Dismissed. |
-| #39 | `js/type-confusion-through-parameter-tampering` | Type confusion — HMAC handler array input | Likely TP (verify) | FP | 64-element array passes length check but Buffer.from(arrayOfStrings) → all-zero buffer; timingSafeEqual returns false → 403. Dismissed. |
+| #35 | js/sql-injection | SQLi — notes/search (no sanitization) | Confirm TP | TP | ?q=' UNION SELECT ... FROM users-- → full users table + bcrypt hashes (200). Issue #2 |
+| #24 | js/path-injection | Path traversal — files/download (no sanitization) | Confirm TP | TP | ?name=../../etc/passwd → /etc/passwd exfiltrated (200). Issue #1 |
+| #23 | js/request-forgery | SSRF — admin/preview (no sanitization) | Confirm TP | TP | ?url=http://127.0.0.1:3000/ → full internal HTML returned (200). Issue #4 |
+| #25 | js/path-injection | Path traversal — files/static ALLOWED_FILES | Dismiss FP | FP | sanitizePath() strips all ..///\ — traversal impossible; array input throws TypeError. Dismissed. |
+| #36 | js/sql-injection | SQLi — notes/by isAlphaOnly char-code loop | Dismiss FP | FP | isAlphaOnly() allows only A-Z/a-z — all SQL metacharacters blocked; array throws TypeError.  |
+| #37 | js/path-injection | Path traversal — files/signed HMAC | Dismiss FP | TP | Hardcoded SIGN_SECRET='nk-sign-2024' → forged HMAC for ../../etc/passwd → file leaked (200). Issue #3 |
+| #38 | js/type-confusion-through-parameter-tampering | Type confusion — isAlphaOnly array input → crash | Confirm TP | FP | Array input to isAlphaOnly() throws TypeError: str.charCodeAt is not a function → 500, SQL never runs. Dismissed. |
+| #39 | js/type-confusion-through-parameter-tampering | Type confusion — HMAC handler array input | Likely TP (verify) | FP | 64-element array passes length check but Buffer.from(arrayOfStrings) → all-zero buffer; timingSafeEqual returns false → 403. Dismissed. |
 | **Score** | | | **5 TP / 3 FP** | | **4 TP / 4 FP** |
 
 The most interesting test case here was alert #37. Developer Claude thought it had been smart using an HMAC signed filename to trick GHAS into creating a false positive, which would have been true if it hadn't hardcoded the secret earlier in the file (thanks Claude.):
