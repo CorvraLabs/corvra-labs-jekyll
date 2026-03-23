@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Using Claude and Burp Suite to Triage SAST Alerts"
-date:   2026-03-23 08:00:00 -0600
+date:   2026-03-22 17:00:00 -0600
 categories: ai automation
 ---
 
